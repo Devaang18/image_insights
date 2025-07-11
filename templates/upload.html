@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Insight</title>
+</head>
+<body>
+  <h2>Upload an Image</h2>
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept="image/*" required>
+    <button type="submit">Analyze</button>
+  </form>
+
+  {% if parsed %}
+    <h2>Analysis Result:</h2>
+    <h3>Objects Detected:</h3>
+    <ul>
+      {% for obj in parsed.objects %}
+        <li>{{ obj }}</li>
+      {% endfor %}
+    </ul>
+
+    <h3>Text Detected:</h3>
+    <p>{{ parsed.text }}</p>
+
+    <h3>NSFW Detection:</h3>
+    <ul>
+      <li>Adult: {{ parsed.nsfw.adult }}</li>
+      <li>Violence: {{ parsed.nsfw.violence }}</li>
+      <li>Racy: {{ parsed.nsfw.racy }}</li>
+    </ul>
+
+    <h3>Logos:</h3>
+    <ul>
+      {% for logo in parsed.logos %}
+        <li>{{ logo }}</li>
+      {% endfor %}
+    </ul>
+
+    <h3>Brand Colors:</h3>
+    <ul>
+      {% for color in parsed.brand_colors %}
+        <li style="background-color: rgb({{ color.rgb.r }}, {{ color.rgb.g }}, {{ color.rgb.b }}); padding: 5px;">
+          RGB({{ color.rgb.r }}, {{ color.rgb.g }}, {{ color.rgb.b }})
+        </li>
+      {% endfor %}
+    </ul>
+
+    <h3>Caption:</h3>
+    <p>{{ parsed.caption }}</p>
+
+    <h3>Person Detected:</h3>
+    {% if parsed.person.error %}
+      <p>{{ parsed.person.error }}</p>
+    {% else %}
+      <ul>
+        <li>Name Guess: {{ parsed.person.entity }}</li>
+        <li>Label: {{ parsed.person.best_guess }}</li>
+      </ul>
+    {% endif %}
+  {% endif %}
+</body>
+</html>
