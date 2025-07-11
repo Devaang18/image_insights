@@ -56,6 +56,20 @@
         <li>Name Guess: {{ parsed.person.entity }}</li>
         <li>Label: {{ parsed.person.best_guess }}</li>
       </ul>
+
+      <h3>Controversies:</h3>
+      {% if parsed.controversies and parsed.controversies|length > 0 %}
+        <ul>
+          {% for c in parsed.controversies %}
+            <li>
+              <strong>{{ c.title }}</strong><br />
+              {{ c.snippet }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No controversies found.</p>
+      {% endif %}
     {% endif %}
   {% endif %}
 </body>

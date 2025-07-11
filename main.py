@@ -7,9 +7,11 @@ from fastapi.templating import Jinja2Templates
 from google.cloud import vision
 from google.oauth2 import service_account
 from PIL import Image
+import requests
 from dotenv import load_dotenv
 load_dotenv()
 
+SERPER_KEY = os.environ["SERPER_KEY"]
 gcp_creds_json = os.environ["GCP_CREDS"]
 gcp_creds_dict = json.loads(gcp_creds_json)
 
@@ -78,9 +80,19 @@ def analyze_image(image_content):
     else:
         result["caption"] = "No clear objects found"
 
-    result["person"] = analyze_face_identity(image_content)
+    # Analyze face / identity
+    person_info = analyze_face_identity(image_content)
+    result["person"] = person_info
+
+    # If a person is detected, fetch controversies
+    if person_info and not person_info.get("error") and person_info.get("entity"):
+        controversies = search_controversies_serper(person_info["entity"])
+        result["controversies"] = controversies
+    else:
+        result["controversies"] = []
 
     return result
+
 
 def crop_face(image_content):
     image = vision.Image(content=image_content)
@@ -124,3 +136,32 @@ def analyze_face_identity(image_content):
     if not cropped:
         return {"error": "No face detected"}
     return detect_web_entities(cropped)
+
+def search_controversies_serper(person_name):
+    url = "https://google.serper.dev/search"
+    query = f"Latest {person_name} controversies 2025 - descriptive headlines"
+
+    headers = {
+        "X-API-KEY": SERPER_KEY,
+        "Content-Type": "application/json"
+    }
+
+    data = {"q": query}
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code == 200:
+        result = response.json()
+        organic = result.get("organic", [])
+        controversies = []
+        for item in organic:
+            title = item.get("title")
+            snippet = item.get("snippet")
+            link = item.get("link")
+            controversies.append({
+                "title": title,
+                "snippet": snippet,
+                "link": link
+            })
+        return controversies
+    else:
+        return []
